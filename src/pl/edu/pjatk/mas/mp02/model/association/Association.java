@@ -9,5 +9,5 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Association {
     Class<?> targetType();
-    String name() default "";
+    String identifier() default "";
 }

@@ -22,6 +22,5 @@ public class Main {
 //todo: wsparcie klasy asocjacji
 //todo: wsparcie dla liczności asocjacji
 //todo: bardziej rozbudowany system cen biletów na podstawie klasy wagonu
-//todo: wsparcie dwóch asocjacji w jednej klasie o jednakowym targetType
 //todo: dodać pole description do asocjacji?
 //todo: usuwanie asocjacji

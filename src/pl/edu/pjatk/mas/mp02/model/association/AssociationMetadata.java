@@ -9,10 +9,18 @@ import lombok.experimental.Accessors;
 @Accessors(fluent = true)
 class AssociationMetadata {
     private final Class<?> targetType;
-    private final String name;
+    private final String identifier;
 
-    public AssociationMetadata(Class<?> targetType, String name) {
+    public AssociationMetadata(Class<?> targetType, String identifier) {
         this.targetType = targetType;
-        this.name = name;
+        this.identifier = identifier;
+    }
+
+    public static AssociationMetadata map(Association association) {
+        return AssociationMetadata
+                .builder()
+                .identifier(association.identifier())
+                .targetType(association.targetType())
+                .build();
     }
 }
