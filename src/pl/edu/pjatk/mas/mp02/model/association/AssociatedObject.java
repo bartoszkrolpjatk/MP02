@@ -1,19 +1,14 @@
 package pl.edu.pjatk.mas.mp02.model.association;
 
-import pl.edu.pjatk.mas.mp02.model.association.exception.AmbiguousAssociationException;
 import pl.edu.pjatk.mas.mp02.model.association.exception.AssociationAlreadyExistsException;
-import pl.edu.pjatk.mas.mp02.model.association.exception.AssociationNotFoundException;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.function.Predicate;
+
+import static pl.edu.pjatk.mas.mp02.model.association.AssociationsMetadataCacheHolder.resolveByTargetOrIdentifier;
 
 public abstract class AssociatedObject {
-    private static final Map<Class<?>, List<AssociationMetadata>> associationsMetadata = new HashMap<>();
+    public static final String DEFAULT_IDENTIFIER = "";
 
     private final Map<AssociationMetadata, Map<AssociatedObject, AssociatedObject>> associations = new HashMap<>();
 
@@ -22,44 +17,28 @@ public abstract class AssociatedObject {
     }
 
     public void link(AssociatedObject target) throws AssociationAlreadyExistsException {
-        link(target, null,2);
+        link(target, DEFAULT_IDENTIFIER,2);
     }
 
     private void link(AssociatedObject target, String identifier, int callCounter) throws AssociationAlreadyExistsException {
         if (callCounter <= 0)
             return;
 
-        AssociationMetadata metadata = getOrCreateMetadata(this.getClass(), target.getClass());
+        AssociationMetadata metadata = resolveByTargetOrIdentifier(this.getClass(), target.getClass(), identifier);
         Map<AssociatedObject, AssociatedObject> links = associations.computeIfAbsent(metadata, amd -> new HashMap<>());
 
         if (links.containsKey(target))
             throw new AssociationAlreadyExistsException(this, target);
 
-        target.link(this, --callCounter);
+        target.link(this, metadata.targetIdentifier(),--callCounter);
         links.put(target, target);
     }
 
-    private static AssociationMetadata getOrCreateMetadata(Class<?> thisType, Class<?> targetType, Predicate<Association> associationPredicate) {
-        List<AssociationMetadata> typeMetadata = associationsMetadata.computeIfAbsent(thisType, t -> new ArrayList<>());
-        return typeMetadata.stream()
-                .filter(amd -> Objects.equals(amd.targetType(), targetType))
-                .findFirst()
-                .orElseGet(() -> {
-                    var annotations = Arrays.stream(thisType.getAnnotationsByType(Association.class))
-                            .filter(associationPredicate)
-                            .toList();
-                    if (annotations.size() > 1)
-                        throw new AmbiguousAssociationException("Found multiple associations between this: %s and target: %s.".formatted(thisType, targetType));
-                    AssociationMetadata toAdd = annotations.stream()
-                            .findFirst()
-                            .map(AssociationMetadata::map)
-                            .orElseThrow(() -> new AssociationNotFoundException(targetType, thisType));
-                    typeMetadata.add(toAdd);
-                    return toAdd;
-                });
-    }
-
     public void printAssociations() {
-        System.out.println(associations);
+        associations.forEach((k,v) -> {
+            System.out.println(k);
+            System.out.println(v);
+            System.out.println();
+        });
     }
 }
