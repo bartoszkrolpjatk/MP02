@@ -11,5 +11,5 @@ import java.lang.annotation.Target;
 @Repeatable(Associations.class)
 public @interface Association {
     Class<?> targetType();
-    String id() default AssociatedObject.DEFAULT_IDENTIFIER;
+    String id() default AssociatedObject.DEFAULT_ASSOCIATION_ID;
 }

@@ -1,7 +1,7 @@
 package pl.edu.pjatk.mas.mp02.model.association;
 
-import pl.edu.pjatk.mas.mp02.model.association.exception.AmbiguousAssociationException;
-import pl.edu.pjatk.mas.mp02.model.association.exception.AssociationNotFoundException;
+import pl.edu.pjatk.mas.mp02.model.association.exception.AmbiguousAssociationAnnotationException;
+import pl.edu.pjatk.mas.mp02.model.association.exception.AssociationAnnotationNotFoundException;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -14,18 +14,17 @@ import java.util.concurrent.ConcurrentHashMap;
 class AssociationsMetadataCacheHolder {
     private static final Map<Class<?>, List<AssociationMetadata>> cache = new ConcurrentHashMap<>();
 
-    static AssociationMetadata resolveByTargetOrIdentifier(Class<?> thisType, Class<?> targetType, String identifier) {
-        List<AssociationMetadata> typeMetadata = cache.computeIfAbsent(thisType, AssociationsMetadataCacheHolder::getAssociationsForType);
+    static AssociationMetadata resolveByTargetAndIdentifier(Class<?> thisType, Class<?> targetType, String identifier) {
+        List<AssociationMetadata> thisMetadata = cache.computeIfAbsent(thisType, AssociationsMetadataCacheHolder::getAssociationsForType);
         List<AssociationMetadata> targetMetadata = cache.computeIfAbsent(targetType, AssociationsMetadataCacheHolder::getAssociationsForType);
-        validateAssociations(typeMetadata, targetMetadata, thisType);
-        return findByTargetTypeOrIdentifier(typeMetadata, targetType, identifier)
-                .orElseThrow(() -> new AssociationNotFoundException(targetType, identifier, thisType));
+        validateAssociations(thisMetadata, targetMetadata, thisType);
+        return findByTargetTypeOrIdentifier(thisMetadata, targetType, identifier)
+                .orElseThrow(() -> new AssociationAnnotationNotFoundException(targetType, identifier, thisType));
     }
 
     private static Optional<AssociationMetadata> findByTargetTypeOrIdentifier(List<AssociationMetadata> metadata, Class<?> targetType, String identifier) {
         return metadata.stream()
-                .filter(amd -> Objects.equals(targetType, amd.targetType()))
-                .filter(amd -> Objects.equals(identifier, amd.id()))
+                .filter(amd -> Objects.equals(targetType, amd.targetType()) && Objects.equals(identifier, amd.id()))
                 .findFirst();
     }
 
@@ -37,7 +36,7 @@ class AssociationsMetadataCacheHolder {
                 .filter(a -> Collections.frequency(annotations, a) > 1)
                 .findAny()
                 .ifPresent(a -> {
-                    throw new AmbiguousAssociationException(type, a.targetType(), a.id());
+                    throw new AmbiguousAssociationAnnotationException(type, a.targetType(), a.id());
                 });
         return annotations;
     }
@@ -48,7 +47,7 @@ class AssociationsMetadataCacheHolder {
                     .filter(targetAssociation -> Objects.equals(targetAssociation.targetType(), thisType) && Objects.equals(targetAssociation.id(), thisAssociation.id()))
                     .toList();
             if (matchedAssociations.size() > 1)
-                throw new AmbiguousAssociationException(thisType, thisAssociation.targetType(), thisAssociation.id());
+                throw new AmbiguousAssociationAnnotationException(thisType, thisAssociation.targetType(), thisAssociation.id());
         });
     }
 }
