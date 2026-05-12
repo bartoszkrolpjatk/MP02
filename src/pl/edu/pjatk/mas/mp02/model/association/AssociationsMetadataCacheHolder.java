@@ -2,6 +2,7 @@ package pl.edu.pjatk.mas.mp02.model.association;
 
 import pl.edu.pjatk.mas.mp02.model.association.exception.AmbiguousAssociationAnnotationException;
 import pl.edu.pjatk.mas.mp02.model.association.exception.AssociationAnnotationNotFoundException;
+import pl.edu.pjatk.mas.mp02.model.association.exception.IncorrectMultiplicitiesAnnotationDeclarationException;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -15,36 +16,49 @@ class AssociationsMetadataCacheHolder {
     private static final Map<Class<?>, List<AssociationMetadata>> cache = new ConcurrentHashMap<>();
 
     static AssociationMetadata resolveByTargetAndIdentifier(Class<?> thisType, Class<?> targetType, String identifier) {
-        List<AssociationMetadata> thisMetadata = Optional.ofNullable(cache.get(thisType))
+        return Optional.ofNullable(cache.get(thisType))
                 .orElseGet(() -> {
-                    List<AssociationMetadata> toAddThisMetadata = getAssociationsForType(thisType);
-                    List<AssociationMetadata> toAddTargetMetadata = getAssociationsForType(targetType);
-                    validateAmbiguousDeclarations(toAddThisMetadata, toAddTargetMetadata, thisType);
-                    cache.put(thisType, toAddThisMetadata);
-                    cache.put(targetType, toAddTargetMetadata);
-                    return toAddThisMetadata;
-                });
-        return findByTargetTypeOrIdentifier(thisMetadata, targetType, identifier)
+                    List<AssociationMetadata> thisMetadata = getAssociationsForType(thisType);
+                    List<AssociationMetadata> targetMetadata = getAssociationsForType(targetType);
+
+                    validateDuplicatedDeclarations(thisMetadata, thisType);
+                    validateDuplicatedDeclarations(targetMetadata, targetType);
+                    validateMultiplicities(thisMetadata, thisType);
+                    validateMultiplicities(targetMetadata, targetType);
+                    validateAmbiguousDeclarations(thisMetadata, targetMetadata, thisType);
+
+                    cache.put(thisType, thisMetadata);
+                    cache.put(targetType, targetMetadata);
+                    return thisMetadata;
+                })
+                .stream()
+                .filter(amd -> Objects.equals(targetType, amd.targetType()) && Objects.equals(identifier, amd.id()))
+                .findFirst()
                 .orElseThrow(() -> new AssociationAnnotationNotFoundException(targetType, identifier, thisType));
     }
 
-    private static Optional<AssociationMetadata> findByTargetTypeOrIdentifier(List<AssociationMetadata> metadata, Class<?> targetType, String identifier) {
-        return metadata.stream()
-                .filter(amd -> Objects.equals(targetType, amd.targetType()) && Objects.equals(identifier, amd.id()))
-                .findFirst();
-    }
-
     private static List<AssociationMetadata> getAssociationsForType(Class<?> type) {
-        var annotations = Arrays.stream(type.getAnnotationsByType(Association.class))
+        return Arrays.stream(type.getAnnotationsByType(Association.class))
                 .map(AssociationMetadata::map)
                 .toList();
+    }
+
+    private static void validateMultiplicities(List<AssociationMetadata> annotations, Class<?> type) {
+        annotations.stream()
+                .filter(a -> a.max() <= 0 || a.min() > a.max())
+                .findAny()
+                .ifPresent(a -> {
+                    throw new IncorrectMultiplicitiesAnnotationDeclarationException(type);
+                });
+    }
+
+    private static void validateDuplicatedDeclarations(List<AssociationMetadata> annotations, Class<?> type) {
         annotations.stream()
                 .filter(a -> Collections.frequency(annotations, a) > 1)
                 .findAny()
                 .ifPresent(a -> {
                     throw new AmbiguousAssociationAnnotationException(type, a.targetType(), a.id());
                 });
-        return annotations;
     }
 
     private static void validateAmbiguousDeclarations(List<AssociationMetadata> thisMetadata, List<AssociationMetadata> targetMetadata, Class<?> thisType) {
