@@ -2,7 +2,7 @@ package pl.edu.pjatk.mas.mp02;
 
 import pl.edu.pjatk.mas.mp02.model.Seat;
 import pl.edu.pjatk.mas.mp02.model.Ticket;
-import pl.edu.pjatk.mas.mp02.model.association.Station;
+import pl.edu.pjatk.mas.mp02.model.Station;
 import pl.edu.pjatk.mas.mp02.model.association.exception.AssociationAlreadyExistsException;
 
 import java.time.LocalDateTime;

@@ -30,7 +30,7 @@ public abstract class AssociatedObject {
         if (links.containsKey(target))
             throw new AssociationAlreadyExistsException(this, target);
 
-        target.link(this, metadata.targetIdentifier(),--callCounter);
+        target.link(this, metadata.id(), --callCounter);
         links.put(target, target);
     }
 
