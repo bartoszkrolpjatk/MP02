@@ -15,9 +15,15 @@ class AssociationsMetadataCacheHolder {
     private static final Map<Class<?>, List<AssociationMetadata>> cache = new ConcurrentHashMap<>();
 
     static AssociationMetadata resolveByTargetAndIdentifier(Class<?> thisType, Class<?> targetType, String identifier) {
-        List<AssociationMetadata> thisMetadata = cache.computeIfAbsent(thisType, AssociationsMetadataCacheHolder::getAssociationsForType);
-        List<AssociationMetadata> targetMetadata = cache.computeIfAbsent(targetType, AssociationsMetadataCacheHolder::getAssociationsForType);
-        validateAssociations(thisMetadata, targetMetadata, thisType);
+        List<AssociationMetadata> thisMetadata = Optional.ofNullable(cache.get(thisType))
+                .orElseGet(() -> {
+                    List<AssociationMetadata> toAddThisMetadata = getAssociationsForType(thisType);
+                    List<AssociationMetadata> toAddTargetMetadata = getAssociationsForType(targetType);
+                    validateAmbiguousDeclarations(toAddThisMetadata, toAddTargetMetadata, thisType);
+                    cache.put(thisType, toAddThisMetadata);
+                    cache.put(targetType, toAddTargetMetadata);
+                    return toAddThisMetadata;
+                });
         return findByTargetTypeOrIdentifier(thisMetadata, targetType, identifier)
                 .orElseThrow(() -> new AssociationAnnotationNotFoundException(targetType, identifier, thisType));
     }
@@ -41,7 +47,7 @@ class AssociationsMetadataCacheHolder {
         return annotations;
     }
 
-    private static void validateAssociations(List<AssociationMetadata> thisMetadata, List<AssociationMetadata> targetMetadata, Class<?> thisType) {
+    private static void validateAmbiguousDeclarations(List<AssociationMetadata> thisMetadata, List<AssociationMetadata> targetMetadata, Class<?> thisType) {
         thisMetadata.forEach(thisAssociation -> {
             var matchedAssociations = targetMetadata.stream()
                     .filter(targetAssociation -> Objects.equals(targetAssociation.targetType(), thisType) && Objects.equals(targetAssociation.id(), thisAssociation.id()))
