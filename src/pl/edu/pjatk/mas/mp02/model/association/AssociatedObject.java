@@ -1,8 +1,8 @@
 package pl.edu.pjatk.mas.mp02.model.association;
 
-import pl.edu.pjatk.mas.mp02.model.association.exception.AssociationAlreadyExistsException;
-import pl.edu.pjatk.mas.mp02.model.association.exception.AssociationMultiplicityException;
-import pl.edu.pjatk.mas.mp02.model.association.exception.AssociationsDoNotExistException;
+import pl.edu.pjatk.mas.mp02.model.association.exception.operation.AssociationAlreadyExistsException;
+import pl.edu.pjatk.mas.mp02.model.association.exception.operation.AssociationMultiplicityException;
+import pl.edu.pjatk.mas.mp02.model.association.exception.operation.AssociationsDoNotExistException;
 
 import java.util.ArrayList;
 import java.util.List;

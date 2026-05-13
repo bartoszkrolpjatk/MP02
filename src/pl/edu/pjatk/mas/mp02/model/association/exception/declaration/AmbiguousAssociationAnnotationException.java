@@ -1,4 +1,4 @@
-package pl.edu.pjatk.mas.mp02.model.association.exception;
+package pl.edu.pjatk.mas.mp02.model.association.exception.declaration;
 
 public class AmbiguousAssociationAnnotationException extends RuntimeException {
     public AmbiguousAssociationAnnotationException(Class<?> thisType, Class<?> targetType, String id) {

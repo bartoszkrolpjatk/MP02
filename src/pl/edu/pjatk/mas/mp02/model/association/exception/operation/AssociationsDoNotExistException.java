@@ -1,4 +1,4 @@
-package pl.edu.pjatk.mas.mp02.model.association.exception;
+package pl.edu.pjatk.mas.mp02.model.association.exception.operation;
 
 public class AssociationsDoNotExistException extends Exception {
     public AssociationsDoNotExistException(Class<?> thisType, Class<?> targetType, String id) {

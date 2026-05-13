@@ -1,4 +1,4 @@
-package pl.edu.pjatk.mas.mp02.model.association.exception;
+package pl.edu.pjatk.mas.mp02.model.association.exception.declaration;
 
 public class IncorrectMultiplicitiesAnnotationDeclarationException extends RuntimeException {
     public IncorrectMultiplicitiesAnnotationDeclarationException(Class<?> incorrectlyDeclaredClass) {

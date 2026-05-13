@@ -1,4 +1,4 @@
-package pl.edu.pjatk.mas.mp02.model.association.exception;
+package pl.edu.pjatk.mas.mp02.model.association.exception.operation;
 
 import pl.edu.pjatk.mas.mp02.model.association.AssociatedObject;
 
