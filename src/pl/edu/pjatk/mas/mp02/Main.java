@@ -4,41 +4,34 @@ import pl.edu.pjatk.mas.mp02.model.Seat;
 import pl.edu.pjatk.mas.mp02.model.Station;
 import pl.edu.pjatk.mas.mp02.model.Ticket;
 import pl.edu.pjatk.mas.mp02.model.association.exception.AssociationAlreadyExistsException;
-import pl.edu.pjatk.mas.mp02.model.association.exception.AssociationDoesNotExistException;
 import pl.edu.pjatk.mas.mp02.model.association.exception.AssociationMultiplicityException;
+import pl.edu.pjatk.mas.mp02.model.association.exception.AssociationsDoNotExistException;
 
 import java.time.LocalDateTime;
 
 public class Main {
-    public static void main(String[] args) throws AssociationAlreadyExistsException, AssociationDoesNotExistException, AssociationMultiplicityException {
+    public static void main(String[] args) throws AssociationAlreadyExistsException, AssociationMultiplicityException, AssociationsDoNotExistException {
 
-        if (true) {
+        if (false) {
             Seat seat = new Seat(1, true);
-            Ticket ticket = new Ticket(null, 200, LocalDateTime.now(), "Michał", "Tomaszewski");
-            ticket.link(seat);
+            Ticket ticket1 = new Ticket(null, 200, LocalDateTime.now(), "Michał", "Tomaszewski");
+            Ticket ticket2 = new Ticket(null, 200, LocalDateTime.now().minusDays(1), "Michał", "Tomaszewski");
+            ticket1.link(seat);
+            seat.link(ticket2);
 
-            ticket.printAssociations();
-            seat.printAssociations();
+            ticket1.printAssociations();
+            System.out.println(seat.getLinks(Ticket.class));
 
-            seat.unlink(ticket);
-            ticket.printAssociations();
         }
 
-        if (true) {
+        if (false) {
             Ticket ticket = new Ticket(null, 200, LocalDateTime.now(), "Michał", "Tomaszewski");
             Station station = new Station("Warszawa Zachodnia");
             ticket.link(station, Ticket.START_STATION_ID);
             ticket.link(station, Ticket.STOP_STATION_ID);
-
-            ticket.unlink(station, Ticket.START_STATION_ID);
-            ticket.printAssociations();
-            station.printAssociations();
-            ticket.unlink(station, Ticket.STOP_STATION_ID);
-            ticket.printAssociations();
-            station.printAssociations();
         }
 
-        if (true) {
+        if (false) {
             Ticket wschodniaZachodnia = new Ticket(null, 200, LocalDateTime.now(), "Michał", "Tomaszewski");
             Station wschodnia = new Station("Wwa Wschodnia");
             Station zachodnia = new Station("Wwa Zachodnia");
@@ -52,6 +45,23 @@ public class Main {
 
             wschodnia.printAssociations();
         }
+
+        if (true) {
+            Ticket ticket1 = new Ticket(0.5, 100, LocalDateTime.now(), "Bartosz", "Król");
+            Ticket ticket2 = new Ticket(0.5, 100, LocalDateTime.now(), "Mariusz", "Pudzianowski");
+            Station station1 = new Station("Wwa Centralna");
+            Station station2 = new Station("Wwa Zachodnia");
+
+            ticket1.link(station1, Ticket.START_STATION_ID);
+            ticket1.link(station2, Ticket.STOP_STATION_ID);
+            ticket2.link(station1, Ticket.START_STATION_ID);
+            ticket2.link(station2, Ticket.STOP_STATION_ID);
+
+            System.out.println(ticket1.getLinks(Station.class, Ticket.START_STATION_ID));
+            System.out.println(ticket1.getLinks(Station.class, Ticket.STOP_STATION_ID));
+
+            System.out.println(station1.getLinks(Ticket.class, Ticket.START_STATION_ID));
+        }
     }
 }
 //todo: wsparcie asocjacji kwalifikowanej
@@ -60,4 +70,4 @@ public class Main {
 //todo: wsparcie klasy asocjacji
 //todo: bardziej rozbudowany system cen biletów na podstawie klasy wagonu
 //todo: dodać pole description do asocjacji?
-//todo: pobranie listy asocjacji
+//todo: relink
