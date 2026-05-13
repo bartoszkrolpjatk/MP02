@@ -4,7 +4,9 @@ import pl.edu.pjatk.mas.mp02.model.association.exception.declaration.AmbiguousAs
 import pl.edu.pjatk.mas.mp02.model.association.exception.declaration.AssociationAnnotationNotFoundException;
 import pl.edu.pjatk.mas.mp02.model.association.exception.declaration.IncorrectCompositionUsageException;
 import pl.edu.pjatk.mas.mp02.model.association.exception.declaration.IncorrectMultiplicitiesAnnotationDeclarationException;
+import pl.edu.pjatk.mas.mp02.model.association.exception.declaration.IncorrectQualifierDeclaration;
 
+import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -28,6 +30,8 @@ class AssociationsMetadataCacheHolder {
                     validateMultiplicities(targetMetadata, targetType);
                     validateComposition(thisMetadata, thisType);
                     validateComposition(targetMetadata, targetType);
+                    validateQualifierAndSetQualifierField(thisMetadata, thisType);
+                    validateQualifierAndSetQualifierField(targetMetadata, thisType);
                     validateAmbiguousDeclarations(thisMetadata, targetMetadata, thisType);
 
                     cache.put(thisType, thisMetadata);
@@ -44,6 +48,21 @@ class AssociationsMetadataCacheHolder {
         return Arrays.stream(type.getAnnotationsByType(Association.class))
                 .map(AssociationMetadata::map)
                 .toList();
+    }
+
+    private static void validateQualifierAndSetQualifierField(List<AssociationMetadata> annotations, Class<?> type) {
+        annotations.forEach(a -> a.qualifier()
+                .ifPresent(qualifier -> {
+                    try {
+                        Field field = a.targetType().getDeclaredField(qualifier.fieldName());
+                        if (field.getType() != qualifier.type())
+                            throw new IncorrectQualifierDeclaration(qualifier.type(), field, type);
+                        field.trySetAccessible();
+                        qualifier.qualifierField(field);
+                    } catch (NoSuchFieldException e) {
+                        throw new IncorrectQualifierDeclaration(qualifier.fieldName(), type);
+                    }
+                }));
     }
 
     private static void validateComposition(List<AssociationMetadata> annotations, Class<?> type) {

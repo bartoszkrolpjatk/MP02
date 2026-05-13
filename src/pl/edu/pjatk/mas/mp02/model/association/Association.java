@@ -15,4 +15,5 @@ public @interface Association {
     int min() default 0;
     int max() default Integer.MAX_VALUE;
     boolean isComposition() default false;
+    Qualifier qualifier() default @Qualifier(fieldName = "", type = Void.class);
 }
