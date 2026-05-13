@@ -1,6 +1,7 @@
 package pl.edu.pjatk.mas.mp02.model.association;
 
 import pl.edu.pjatk.mas.mp02.model.association.exception.operation.AssociationAlreadyExistsException;
+import pl.edu.pjatk.mas.mp02.model.association.exception.operation.AssociationIsNotQualifiedException;
 import pl.edu.pjatk.mas.mp02.model.association.exception.operation.AssociationMultiplicityException;
 import pl.edu.pjatk.mas.mp02.model.association.exception.operation.AssociationsDoNotExistException;
 
@@ -15,7 +16,7 @@ import static pl.edu.pjatk.mas.mp02.model.association.AssociationsMetadataCacheH
 public abstract class AssociatedObject {
     public static final String DEFAULT_ASSOCIATION_ID = "";
 
-    private final Map<AssociationMetadata, Map<AssociatedObject, AssociatedObject>> associations = new ConcurrentHashMap<>();
+    private final Map<AssociationMetadata, Map<Object, AssociatedObject>> associations = new ConcurrentHashMap<>();
 
     public void link(AssociatedObject target, String id) throws AssociationAlreadyExistsException, AssociationMultiplicityException {
         link(target, id, 2);
@@ -30,15 +31,16 @@ public abstract class AssociatedObject {
             return;
 
         AssociationMetadata metadata = resolveByTargetAndIdentifier(this.getClass(), target.getClass(), id);
-        Map<AssociatedObject, AssociatedObject> links = associations.computeIfAbsent(metadata, amd -> new ConcurrentHashMap<>());
+        Map<Object, AssociatedObject> links = associations.computeIfAbsent(metadata, amd -> new ConcurrentHashMap<>());
 
-        if (links.containsKey(target))
-            throw new AssociationAlreadyExistsException(this, target);
+        var key = findQualifier(metadata, target).orElse(target);
+        if (links.containsKey(key))
+            throw new AssociationAlreadyExistsException(this, target, key);
         if (links.size() == metadata.max())
             throw new AssociationMultiplicityException("Cannot link '%s' with '%s'! Max limit '%s' hit".formatted(this, target, metadata.max()));
 
         target.link(this, metadata.id(), --callCounter);
-        links.put(target, target);
+        links.put(key, target);
     }
 
     public void unlink(AssociatedObject target, String id) throws AssociationsDoNotExistException, AssociationMultiplicityException {
@@ -54,16 +56,17 @@ public abstract class AssociatedObject {
             return;
 
         AssociationMetadata metadata = resolveByTargetAndIdentifier(this.getClass(), target.getClass(), id);
-        Map<AssociatedObject, AssociatedObject> links = Optional.ofNullable(associations.get(metadata))
+        Map<Object, AssociatedObject> links = Optional.ofNullable(associations.get(metadata))
                 .orElseThrow(() -> new AssociationsDoNotExistException(this.getClass(), target.getClass(), id));
 
-        if (!links.containsKey(target))
+        var key = findQualifier(metadata, target).orElse(target);
+        if (!links.containsKey(key))
             throw new AssociationsDoNotExistException(this.getClass(), target.getClass(), id);
         if (links.size() == metadata.min())
             throw new AssociationMultiplicityException("Cannot unlink '%s' with '%s'! Min limit '%s' hit".formatted(this, target, metadata.min()));
 
         target.unlink(this, metadata.id(), --callCounter);
-        links.remove(target);
+        links.remove(key);
     }
 
     public List<AssociatedObject> getLinks(Class<?> targetType) throws AssociationsDoNotExistException {
@@ -72,9 +75,35 @@ public abstract class AssociatedObject {
 
     public List<AssociatedObject> getLinks(Class<?> targetType, String id) throws AssociationsDoNotExistException {
         AssociationMetadata metadata = resolveByTargetAndIdentifier(this.getClass(), targetType, id);
-        Map<AssociatedObject, AssociatedObject> links = Optional.ofNullable(associations.get(metadata))
+        Map<Object, AssociatedObject> links = Optional.ofNullable(associations.get(metadata))
                 .orElseThrow(() -> new AssociationsDoNotExistException(this.getClass(), targetType, id));
         return new ArrayList<>(links.values());
+    }
+
+    public Optional<AssociatedObject> findByQualifier(Class<?> targetType, Object qualifier) throws AssociationsDoNotExistException, AssociationIsNotQualifiedException {
+        return findByQualifier(targetType, DEFAULT_ASSOCIATION_ID, qualifier);
+    }
+
+    public Optional<AssociatedObject> findByQualifier(Class<?> targetType, String id, Object qualifier) throws AssociationsDoNotExistException, AssociationIsNotQualifiedException {
+        AssociationMetadata metadata = resolveByTargetAndIdentifier(this.getClass(), targetType, id);
+        if (metadata.qualifier().isEmpty())
+            throw new AssociationIsNotQualifiedException();
+
+        Map<Object, AssociatedObject> links = Optional.ofNullable(associations.get(metadata))
+                .orElseThrow(() -> new AssociationsDoNotExistException(this.getClass(), targetType, id));
+        return Optional.ofNullable(links.get(qualifier));
+    }
+
+    private Optional<Object> findQualifier(AssociationMetadata metadata, AssociatedObject target) {
+        return metadata.qualifier()
+                .flatMap(QualifierMetadata::qualifierField)
+                .map(f -> {
+                    try {
+                        return f.get(target);
+                    } catch (IllegalAccessException e) {
+                        throw new RuntimeException("Field '%s' should be accessible!".formatted(f));
+                    }
+                });
     }
 
     public void printAssociations() {

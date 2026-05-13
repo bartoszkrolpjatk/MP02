@@ -5,6 +5,9 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.Accessors;
 
+import java.util.Objects;
+import java.util.Optional;
+
 @Data
 @Builder
 @RequiredArgsConstructor
@@ -15,6 +18,7 @@ class AssociationMetadata {
     private final int min;
     private final int max;
     private final boolean isComposition;
+    private final QualifierMetadata qualifier;
 
     public static AssociationMetadata map(Association association) {
         return AssociationMetadata
@@ -24,6 +28,21 @@ class AssociationMetadata {
                 .isComposition(association.isComposition())
                 .min(association.min())
                 .max(association.max())
+                .qualifier(getQualifier(association.qualifier()))
                 .build();
+    }
+
+    private static QualifierMetadata getQualifier(Qualifier qualifier) {
+        if (Objects.equals(qualifier.fieldName(), "") && Objects.equals(qualifier.type(), Void.class)) {
+            return null;
+        }
+        return QualifierMetadata.builder()
+                .fieldName(qualifier.fieldName())
+                .type(qualifier.type())
+                .build();
+    }
+
+    public Optional<QualifierMetadata> qualifier() {
+        return Optional.ofNullable(qualifier);
     }
 }
