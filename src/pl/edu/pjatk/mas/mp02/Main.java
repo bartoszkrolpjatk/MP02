@@ -3,9 +3,9 @@ package pl.edu.pjatk.mas.mp02;
 import pl.edu.pjatk.mas.mp02.model.Seat;
 import pl.edu.pjatk.mas.mp02.model.Station;
 import pl.edu.pjatk.mas.mp02.model.Ticket;
-import pl.edu.pjatk.mas.mp02.model.association.exception.AssociationAlreadyExistsException;
-import pl.edu.pjatk.mas.mp02.model.association.exception.AssociationMultiplicityException;
-import pl.edu.pjatk.mas.mp02.model.association.exception.AssociationsDoNotExistException;
+import pl.edu.pjatk.mas.mp02.model.association.exception.operation.AssociationAlreadyExistsException;
+import pl.edu.pjatk.mas.mp02.model.association.exception.operation.AssociationMultiplicityException;
+import pl.edu.pjatk.mas.mp02.model.association.exception.operation.AssociationsDoNotExistException;
 
 import java.time.LocalDateTime;
 
@@ -65,9 +65,9 @@ public class Main {
     }
 }
 //todo: wsparcie asocjacji kwalifikowanej
-//todo: wsparcie kompozycji
 //todo: oddzielna klasa @Qualified? AbstractProcessor?
 //todo: wsparcie klasy asocjacji
 //todo: bardziej rozbudowany system cen biletów na podstawie klasy wagonu
 //todo: dodać pole description do asocjacji?
-//todo: relink
+//todo: relink (nie można przepiąć kompozycji)
+//todo: refactor walidacji adnotacji

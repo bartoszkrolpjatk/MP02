@@ -1,8 +1,9 @@
 package pl.edu.pjatk.mas.mp02.model.association;
 
-import pl.edu.pjatk.mas.mp02.model.association.exception.AmbiguousAssociationAnnotationException;
-import pl.edu.pjatk.mas.mp02.model.association.exception.AssociationAnnotationNotFoundException;
-import pl.edu.pjatk.mas.mp02.model.association.exception.IncorrectMultiplicitiesAnnotationDeclarationException;
+import pl.edu.pjatk.mas.mp02.model.association.exception.declaration.AmbiguousAssociationAnnotationException;
+import pl.edu.pjatk.mas.mp02.model.association.exception.declaration.AssociationAnnotationNotFoundException;
+import pl.edu.pjatk.mas.mp02.model.association.exception.declaration.IncorrectCompositionUsageException;
+import pl.edu.pjatk.mas.mp02.model.association.exception.declaration.IncorrectMultiplicitiesAnnotationDeclarationException;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -25,6 +26,8 @@ class AssociationsMetadataCacheHolder {
                     validateDuplicatedDeclarations(targetMetadata, targetType);
                     validateMultiplicities(thisMetadata, thisType);
                     validateMultiplicities(targetMetadata, targetType);
+                    validateComposition(thisMetadata, thisType);
+                    validateComposition(targetMetadata, targetType);
                     validateAmbiguousDeclarations(thisMetadata, targetMetadata, thisType);
 
                     cache.put(thisType, thisMetadata);
@@ -41,6 +44,15 @@ class AssociationsMetadataCacheHolder {
         return Arrays.stream(type.getAnnotationsByType(Association.class))
                 .map(AssociationMetadata::map)
                 .toList();
+    }
+
+    private static void validateComposition(List<AssociationMetadata> annotations, Class<?> type) {
+        annotations.stream()
+                .filter(a -> a.isComposition() && (a.min() != 1 || a.max() != 1))
+                .findAny()
+                .ifPresent(a -> {
+                    throw new IncorrectCompositionUsageException(type);
+                });
     }
 
     private static void validateMultiplicities(List<AssociationMetadata> annotations, Class<?> type) {

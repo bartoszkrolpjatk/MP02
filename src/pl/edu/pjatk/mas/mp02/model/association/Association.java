@@ -14,4 +14,5 @@ public @interface Association {
     String id() default AssociatedObject.DEFAULT_ASSOCIATION_ID;
     int min() default 0;
     int max() default Integer.MAX_VALUE;
+    boolean isComposition() default false;
 }

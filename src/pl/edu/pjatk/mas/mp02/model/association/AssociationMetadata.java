@@ -14,12 +14,14 @@ class AssociationMetadata {
     private final String id;
     private final int min;
     private final int max;
+    private final boolean isComposition;
 
     public static AssociationMetadata map(Association association) {
         return AssociationMetadata
                 .builder()
                 .id(association.id())
                 .targetType(association.targetType())
+                .isComposition(association.isComposition())
                 .min(association.min())
                 .max(association.max())
                 .build();
