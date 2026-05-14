@@ -10,9 +10,9 @@ import java.time.LocalDateTime;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-@Association(targetType = Seat.class, min = 1, max = 1)
-@Association(targetType = Station.class, id = Ticket.START_STATION_ID, min = 1, max = 1)
-@Association(targetType = Station.class, id = Ticket.STOP_STATION_ID, min = 1, max = 1)
+@Association(target = Seat.class, min = 1, max = 1)
+@Association(target = Station.class, id = Ticket.START_STATION_ID, min = 1, max = 1)
+@Association(target = Station.class, id = Ticket.STOP_STATION_ID, min = 1, max = 1)
 @RequiredArgsConstructor
 public class Ticket extends AssociatedObject {
     public static final String START_STATION_ID = "startStation";

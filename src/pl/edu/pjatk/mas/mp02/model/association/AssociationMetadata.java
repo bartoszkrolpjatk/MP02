@@ -13,23 +13,29 @@ import java.util.Optional;
 @RequiredArgsConstructor
 @Accessors(fluent = true)
 class AssociationMetadata {
-    private final Class<?> targetType;
+    private final Class<? extends AssociatedObject> targetType;
     private final String id;
     private final int min;
     private final int max;
     private final boolean isComposition;
     private final QualifierMetadata qualifier;
+    private final Class<? extends Payload> payloadType;
 
     public static AssociationMetadata map(Association association) {
         return AssociationMetadata
                 .builder()
                 .id(association.id())
-                .targetType(association.targetType())
+                .targetType(association.target())
                 .isComposition(association.isComposition())
                 .min(association.min())
                 .max(association.max())
                 .qualifier(getQualifier(association.qualifier()))
+                .payloadType(getThrough(association))
                 .build();
+    }
+
+    private static Class<? extends Payload> getThrough(Association association) {
+        return association.payload().equals(None.class) ? null : association.payload();
     }
 
     private static QualifierMetadata getQualifier(Qualifier qualifier) {
@@ -44,5 +50,9 @@ class AssociationMetadata {
 
     public Optional<QualifierMetadata> qualifier() {
         return Optional.ofNullable(qualifier);
+    }
+
+    public Optional<Class<? extends Payload>> payloadType() {
+        return Optional.ofNullable(payloadType);
     }
 }

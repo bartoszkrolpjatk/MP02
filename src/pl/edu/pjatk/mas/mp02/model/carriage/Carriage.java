@@ -7,8 +7,8 @@ import pl.edu.pjatk.mas.mp02.model.association.AssociatedObject;
 import pl.edu.pjatk.mas.mp02.model.association.Association;
 
 @RequiredArgsConstructor
-@Association(targetType = Seat.class, min = 1)
-@Association(targetType = Train.class, max = 1)
+@Association(target = Seat.class, min = 1)
+@Association(target = Train.class, max = 1)
 public class Carriage extends AssociatedObject {
     private final Integer carriageNumber;
     private final CarriageType carriageType;

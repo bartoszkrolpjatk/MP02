@@ -10,8 +10,8 @@ import pl.edu.pjatk.mas.mp02.model.carriage.Carriage;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @RequiredArgsConstructor
-@Association(targetType = Ticket.class)
-@Association(targetType = Carriage.class, isComposition = true, min = 1, max = 1)
+@Association(target = Ticket.class)
+@Association(target = Carriage.class, isComposition = true, min = 1, max = 1)
 public class Seat extends AssociatedObject {
     private final int seatNumber;
     private final boolean window;

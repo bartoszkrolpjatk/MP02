@@ -1,13 +1,15 @@
 package pl.edu.pjatk.mas.mp02;
 
+import pl.edu.pjatk.mas.mp02.model.RailwayLine;
 import pl.edu.pjatk.mas.mp02.model.Seat;
 import pl.edu.pjatk.mas.mp02.model.Station;
 import pl.edu.pjatk.mas.mp02.model.Ticket;
 import pl.edu.pjatk.mas.mp02.model.Train;
+import pl.edu.pjatk.mas.mp02.model.TrainService;
 import pl.edu.pjatk.mas.mp02.model.association.exception.operation.AssociationAlreadyExistsException;
-import pl.edu.pjatk.mas.mp02.model.association.exception.operation.AssociationIsNotQualifiedException;
+import pl.edu.pjatk.mas.mp02.model.association.exception.operation.AssociationException;
 import pl.edu.pjatk.mas.mp02.model.association.exception.operation.AssociationMultiplicityException;
-import pl.edu.pjatk.mas.mp02.model.association.exception.operation.AssociationsDoNotExistException;
+import pl.edu.pjatk.mas.mp02.model.association.exception.operation.PayloadOperationException;
 import pl.edu.pjatk.mas.mp02.model.carriage.Carriage;
 import pl.edu.pjatk.mas.mp02.model.carriage.CarriageClass;
 import pl.edu.pjatk.mas.mp02.model.carriage.CarriageType;
@@ -15,7 +17,7 @@ import pl.edu.pjatk.mas.mp02.model.carriage.CarriageType;
 import java.time.LocalDateTime;
 
 public class Main {
-    public static void main(String[] args) throws AssociationAlreadyExistsException, AssociationMultiplicityException, AssociationsDoNotExistException, AssociationIsNotQualifiedException {
+    public static void main(String[] args) throws AssociationException {
 
         if (false) {
             Seat seat = new Seat(1, true);
@@ -82,7 +84,7 @@ public class Main {
             System.out.println(foundCarriage);
         }
 
-        if (true) {
+        if (false) {
             Train ic = new Train("IC1023", "Intercity", "IC");
             Train eic = new Train("EIC4121", "Intercity", "EIC");
             Carriage carriage1 = new Carriage(15, CarriageType.STANDARD, CarriageClass.SECOND);
@@ -106,9 +108,41 @@ public class Main {
             ic.unlink(carriage1);
             ic.printAssociations();
         }
+
+        if (true) {
+            Train eic = new Train("EIC4121", "Intercity", "EIC");
+            Carriage carriage = new Carriage(15, CarriageType.STANDARD, CarriageClass.SECOND);
+            eic.link(carriage);
+
+            RailwayLine railwayLine = new RailwayLine(19);
+            TrainService trainService1 = new TrainService(LocalDateTime.now(), LocalDateTime.now().plusHours(3));
+            TrainService trainService2 = new TrainService(LocalDateTime.now(), LocalDateTime.now().plusHours(4));
+
+            eic.link(railwayLine, trainService1);
+            try {
+                eic.addPayload(railwayLine, trainService1);
+            } catch (PayloadOperationException e) {
+                System.err.println("trainService1 is already linked to eic and railwayLine");
+            }
+            eic.addPayload(railwayLine, trainService2);
+
+            eic.printAssociations();
+            railwayLine.printAssociations();
+
+            eic.unlink(railwayLine);
+            eic.printAssociations();
+        }
+
+        if (false) {
+            Train eic = new Train("EIC4121", "Intercity", "EIC");
+            RailwayLine railwayLine = new RailwayLine(19);
+            TrainService trainService = new TrainService(LocalDateTime.now(), LocalDateTime.now().plusHours(3));
+        }
     }
 }
-//todo: wsparcie klasy asocjacji
-//todo: bardziej rozbudowany system cen biletów na podstawie klasy wagonu
-//todo: dodać pole description do asocjacji?
 //todo: relink (nie można przepiąć kompozycji)
+//todo: refactor walidacji w cache holder
+//todo: czy Quailifier.type jest potrzebny?
+//todo: remove payload from association
+//todo: bag constraint na klasie asocjacji
+//todo: dodać typ generyczny w AssociatedObject żeby nie robić rzutowania
