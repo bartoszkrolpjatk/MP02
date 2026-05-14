@@ -6,6 +6,7 @@ import pl.edu.pjatk.mas.mp02.model.Station;
 import pl.edu.pjatk.mas.mp02.model.Ticket;
 import pl.edu.pjatk.mas.mp02.model.Train;
 import pl.edu.pjatk.mas.mp02.model.TrainService;
+import pl.edu.pjatk.mas.mp02.model.association.Payload;
 import pl.edu.pjatk.mas.mp02.model.association.exception.operation.AssociationAlreadyExistsException;
 import pl.edu.pjatk.mas.mp02.model.association.exception.operation.AssociationException;
 import pl.edu.pjatk.mas.mp02.model.association.exception.operation.AssociationMultiplicityException;
@@ -16,6 +17,7 @@ import pl.edu.pjatk.mas.mp02.model.carriage.CarriageType;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 
 public class Main {
     public static void main(String[] args) throws AssociationException {
@@ -148,7 +150,7 @@ public class Main {
             eic.printAssociations();
         }
 
-        if (true) {
+        if (false) {
             Train eic = new Train("EIC4121", "Intercity", "EIC");
             RailwayLine railwayLine10 = new RailwayLine(10);
             RailwayLine railwayLine11 = new RailwayLine(11);
@@ -158,9 +160,70 @@ public class Main {
             List<RailwayLine> links = eic.getLinks(RailwayLine.class);
             System.out.println(links);
         }
+
+        if (true) {
+            System.out.println("--- TESTOWANIE METODY getPayloads ---");
+
+            // Przygotowanie danych testowych
+            Train eic = new Train("EIC4121", "Intercity", "EIC");
+            RailwayLine railwayLine = new RailwayLine(19);
+            RailwayLine emptyLine = new RailwayLine(42);
+            Carriage carriage = new Carriage(15, CarriageType.STANDARD, CarriageClass.SECOND);
+
+            TrainService morningService = new TrainService(LocalDateTime.now().plusHours(1), LocalDateTime.now().plusHours(4));
+            TrainService eveningService = new TrainService(LocalDateTime.now().plusHours(10), LocalDateTime.now().plusHours(13));
+
+            try {
+                // Konfiguracja początkowych powiązań
+                eic.link(railwayLine, morningService);
+                eic.addPayload(railwayLine, eveningService);
+                eic.link(carriage);
+            } catch (AssociationException e) {
+                System.err.println("Błąd podczas konfiguracji testu: " + e.getMessage());
+            }
+
+            // ---------------------------------------------------------
+            // SCENARIUSZ 1: Poprawne pobranie payloadów (Sukces)
+            // ---------------------------------------------------------
+            System.out.println("\n1. Test poprawnego pobrania payloadów (Train -> RailwayLine):");
+            try {
+                // Wnioskowanie typów (Type Inference) zadziała tutaj automatycznie!
+                Set<TrainService> services = eic.getPayloads(railwayLine);
+                System.out.println("Sukces! Pobrano kursy (" + services.size() + "):");
+                services.forEach(System.out::println);
+            } catch (AssociationException e) {
+                System.err.println("Niespodziewany błąd: " + e.getMessage());
+            }
+
+            // ---------------------------------------------------------
+            // SCENARIUSZ 2: Walidacja - Brak powiązania w mapie
+            // ---------------------------------------------------------
+            System.out.println("\n2. Test walidacji - Brak powiązania z linią:");
+            try {
+                Set<TrainService> emptyServices = eic.getPayloads(emptyLine);
+                System.out.println("Pobrano kursy: " + emptyServices);
+            } catch (AssociationException e) {
+                // Oczekujemy wypisania błędu AssociationsDoNotExistException
+                System.err.println("Złapano oczekiwany wyjątek: " + e.getMessage());
+            }
+
+            // ---------------------------------------------------------
+            // SCENARIUSZ 3: Walidacja - Asocjacja bez deklaracji payload
+            // ---------------------------------------------------------
+            System.out.println("\n3. Test walidacji - Brak wsparcia dla payload (Train -> Carriage):");
+            try {
+                Set<Payload> carriagePayloads = eic.getPayloads(carriage);
+                System.out.println("Pobrano: " + carriagePayloads);
+            } catch (AssociationException e) {
+                // Oczekujemy wypisania błędu PayloadOperationException
+                System.err.println("Złapano oczekiwany wyjątek: " + e.getMessage());
+            }
+
+            System.out.println("-------------------------------------");
+        }
     }
 }
 //todo: relink (nie można przepiąć kompozycji)
 //todo: refactor walidacji w cache holder
 //todo: bag constraint na klasie asocjacji
-//todo: dodać typ generyczny w AssociatedObject żeby nie robić rzutowania
+//todo: metoda removePayload może usunąć ostatni payload z Setu, wtedy mamy asocjację bez żadnego payloadu - dodać walidację

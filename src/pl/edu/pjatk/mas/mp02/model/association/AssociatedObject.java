@@ -8,11 +8,11 @@ import pl.edu.pjatk.mas.mp02.model.association.exception.operation.AssociationMu
 import pl.edu.pjatk.mas.mp02.model.association.exception.operation.AssociationsDoNotExistException;
 import pl.edu.pjatk.mas.mp02.model.association.exception.operation.PayloadOperationException;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static pl.edu.pjatk.mas.mp02.model.association.AssociationsMetadataCacheHolder.resolveByTargetAndId;
@@ -27,8 +27,10 @@ public abstract class AssociatedObject {
     }
 
     public void removePayload(AssociatedObject target, Payload payload, String id) throws AssociationException {
-        var thisEntry = this.validatePayloadOperationAndGetEntry(target, payload, id);
-        var targetEntry = target.validatePayloadOperationAndGetEntry(this, payload, id);
+        validatePayloadExistsAndPayloadType(target, id, payload.getClass());
+        var thisEntry = this.getEntry(target, id);
+        target.validatePayloadExistsAndPayloadType(this, id, payload.getClass());
+        var targetEntry = target.getEntry(this, id);
 
         if (!thisEntry.removeFromPayload(payload))
             throw new PayloadOperationException("Unable to remove payload from: '%s'".formatted(thisEntry));
@@ -43,8 +45,10 @@ public abstract class AssociatedObject {
     }
 
     public void addPayload(AssociatedObject target, Payload payload, String id) throws AssociationException {
-        var thisEntry = this.validatePayloadOperationAndGetEntry(target, payload, id);
-        var targetEntry = target.validatePayloadOperationAndGetEntry(this, payload, id);
+        validatePayloadExistsAndPayloadType(target, id, payload.getClass());
+        var thisEntry = this.getEntry(target, id);
+        target.validatePayloadExistsAndPayloadType(this, id, payload.getClass());
+        var targetEntry = target.getEntry(this, id);
 
         if (!thisEntry.addToPayload(payload))
             throw new PayloadOperationException("Unable to add payload to: '%s'".formatted(thisEntry));
@@ -54,23 +58,46 @@ public abstract class AssociatedObject {
         }
     }
 
-    private AssociationEntry validatePayloadOperationAndGetEntry(AssociatedObject target, Payload payload, String id) throws AssociationException {
-        this.validatePayloadOperation(target, id, payload.getClass());
-        AssociationMetadata metadata = resolveByTargetAndId(this.getClass(), target.getClass(), id);
-        var key = findQualifier(metadata, target).orElse(target);
-        return Optional.ofNullable(associations.get(metadata))
-                .flatMap(links -> Optional.ofNullable(links.get(key)))
-                .orElseThrow(() -> new PayloadOperationException("Unable to add payload. Associations between '%s' and '%s' do not exist".formatted(this.getClass().getSimpleName(), target.getClass().getSimpleName())));
-    }
-
     public void link(AssociatedObject target, Payload payload) throws AssociationException {
         link(target, payload, DEFAULT_ASSOCIATION_ID);
     }
 
     public void link(AssociatedObject target, Payload payload, String id) throws AssociationException {
-        this.validatePayloadOperation(target, id, payload.getClass());
-        target.validatePayloadOperation(this, id, payload.getClass());
+        this.validatePayloadExistsAndPayloadType(target, id, payload.getClass());
+        target.validatePayloadExistsAndPayloadType(this, id, payload.getClass());
         this.link(target, payload, id, 2);
+    }
+
+    public <T extends Payload> Set<T> getPayloads(AssociatedObject target) throws AssociationException {
+        return getPayloads(target, DEFAULT_ASSOCIATION_ID);
+    }
+
+    @SuppressWarnings("unchecked")
+    public <T extends Payload> Set<T> getPayloads(AssociatedObject target, String id) throws AssociationException {
+        validatePayloadExists(target, id);
+        var entry = getEntry(target, id);
+        return (Set<T>) entry.payload();
+    }
+
+    private AssociationEntry getEntry(AssociatedObject target, String id) throws AssociationException {
+        AssociationMetadata metadata = resolveByTargetAndId(this.getClass(), target.getClass(), id);
+        var key = findQualifier(metadata, target).orElse(target);
+        return Optional.ofNullable(associations.get(metadata))
+                .flatMap(links -> Optional.ofNullable(links.get(key)))
+                .orElseThrow(() -> new PayloadOperationException("Unable to perform payload operation. Associations between '%s' and '%s' do not exist".formatted(this, target)));
+    }
+
+    private void validatePayloadExistsAndPayloadType(AssociatedObject target, String id, Class<? extends Payload> payloadType) throws AssociationException {
+        AssociationMetadata metadata = resolveByTargetAndId(this.getClass(), target.getClass(), id);
+        validatePayloadExists(target, id);
+        if (!Objects.equals(metadata.payloadType().get(), payloadType))
+            throw new PayloadOperationException(payloadType, metadata.payloadType().get(), this.getClass());
+    }
+
+    private void validatePayloadExists(AssociatedObject target, String id) throws AssociationException {
+        AssociationMetadata metadata = resolveByTargetAndId(this.getClass(), target.getClass(), id);
+        if (metadata.payloadType().isEmpty())
+            throw new PayloadOperationException(this.getClass(), target.getClass());
     }
 
     public void link(AssociatedObject target) throws AssociationException {
@@ -128,7 +155,7 @@ public abstract class AssociatedObject {
         return getLinks(targetType, DEFAULT_ASSOCIATION_ID);
     }
 
-    public <T extends AssociatedObject> List<T> getLinks(Class<T> targetType, String id) throws AssociationException {//todo: przygotować getLinks na klasy asocjacji
+    public <T extends AssociatedObject> List<T> getLinks(Class<T> targetType, String id) throws AssociationException {
         AssociationMetadata metadata = resolveByTargetAndId(this.getClass(), targetType, id);
         Map<Object, AssociationEntry> links = Optional.ofNullable(associations.get(metadata))
                 .orElseThrow(() -> new AssociationsDoNotExistException(this.getClass(), targetType, id));
@@ -142,7 +169,7 @@ public abstract class AssociatedObject {
         return findByQualifier(targetType, DEFAULT_ASSOCIATION_ID, qualifier);
     }
 
-    public <T extends AssociatedObject> Optional<T> findByQualifier(Class<T> targetType, String id, Object qualifier) throws AssociationException {//todo: przygotować findByQualifier na klasy asocjacji
+    public <T extends AssociatedObject> Optional<T> findByQualifier(Class<T> targetType, String id, Object qualifier) throws AssociationException {
         AssociationMetadata metadata = resolveByTargetAndId(this.getClass(), targetType, id);
         if (metadata.qualifier().isEmpty())
             throw new AssociationIsNotQualifiedException(targetType, id);
@@ -164,14 +191,6 @@ public abstract class AssociatedObject {
                         throw new IncorrectQualifierDeclaration(f);
                     }
                 });
-    }
-
-    private void validatePayloadOperation(AssociatedObject target, String id, Class<? extends Payload> payloadType) throws AssociationException {
-        AssociationMetadata metadata = resolveByTargetAndId(this.getClass(), target.getClass(), id);
-        if (metadata.payloadType().isEmpty())
-            throw new PayloadOperationException(this.getClass(), target.getClass());
-        if (!Objects.equals(metadata.payloadType().get(), payloadType))
-            throw new PayloadOperationException(payloadType, metadata.payloadType().get(), this.getClass());
     }
 
     public void printAssociations() {

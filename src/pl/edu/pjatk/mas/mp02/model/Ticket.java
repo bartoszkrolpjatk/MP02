@@ -9,7 +9,7 @@ import pl.edu.pjatk.mas.mp02.model.association.Association;
 import java.time.LocalDateTime;
 
 @Data
-@EqualsAndHashCode(callSuper = true)
+@EqualsAndHashCode(callSuper = false)
 @Association(target = Seat.class, min = 1, max = 1)
 @Association(target = Station.class, id = Ticket.START_STATION_ID, min = 1, max = 1)
 @Association(target = Station.class, id = Ticket.STOP_STATION_ID, min = 1, max = 1)
