@@ -5,7 +5,7 @@ import pl.edu.pjatk.mas.mp02.model.association.exception.declaration.Association
 import pl.edu.pjatk.mas.mp02.model.association.exception.declaration.IncorrectCompositionUsageException;
 import pl.edu.pjatk.mas.mp02.model.association.exception.declaration.IncorrectMultiplicitiesAnnotationDeclarationException;
 import pl.edu.pjatk.mas.mp02.model.association.exception.declaration.IncorrectQualifierDeclaration;
-import pl.edu.pjatk.mas.mp02.model.association.exception.declaration.IncorrectThroughParamDeclaration;
+import pl.edu.pjatk.mas.mp02.model.association.exception.declaration.IncorrectPayloadParamDeclaration;
 
 import java.lang.reflect.Field;
 import java.util.Arrays;
@@ -26,7 +26,7 @@ class AssociationsMetadataCacheHolder {
                     validateMultiplicities(declaredAssociations, t);
                     validateComposition(declaredAssociations, t);
                     validateQualifierAndSetQualifierField(declaredAssociations, t);
-                    validateThroughUsage(declaredAssociations, t);
+                    validatePayloadUsage(declaredAssociations, t);
                     return declaredAssociations;
                 })
                 .stream()
@@ -41,21 +41,21 @@ class AssociationsMetadataCacheHolder {
                 .toList();
     }
 
-    private static void validateThroughUsage(List<AssociationMetadata> declaredAssociations, Class<?> thisType) {
+    private static void validatePayloadUsage(List<AssociationMetadata> declaredAssociations, Class<?> thisType) {
         declaredAssociations.forEach(association -> association.payloadType()
                 .ifPresent(payloadType -> {
                     if (payloadType.equals(thisType))
-                        throw new IncorrectThroughParamDeclaration(thisType);
+                        throw new IncorrectPayloadParamDeclaration(thisType);
 
                     List<AssociationMetadata> targetAssociations = getAssociationsForType(association.targetType());
-                    boolean correctThroughExistsOnTarget = targetAssociations.stream()
+                    boolean correctPayloadExistsOnTarget = targetAssociations.stream()
                             .filter(targetAssociation -> targetAssociation.payloadType().isPresent())
                             .anyMatch(targetAssociation ->
                                     payloadType.equals(targetAssociation.payloadType().get()) &&
                                             targetAssociation.targetType().equals(thisType) &&
                                             targetAssociation.id().equals(association.id()));
-                    if (!correctThroughExistsOnTarget)
-                        throw new IncorrectThroughParamDeclaration(payloadType, thisType, association.targetType());
+                    if (!correctPayloadExistsOnTarget)
+                        throw new IncorrectPayloadParamDeclaration(payloadType, thisType, association.targetType());
                 }));
     }
 

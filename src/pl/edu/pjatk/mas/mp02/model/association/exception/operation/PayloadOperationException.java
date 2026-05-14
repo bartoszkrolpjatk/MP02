@@ -1,19 +1,21 @@
 package pl.edu.pjatk.mas.mp02.model.association.exception.operation;
 
+import pl.edu.pjatk.mas.mp02.model.association.AssociatedObject;
+
 public class PayloadOperationException extends AssociationException {
-    public PayloadOperationException(Class<?> noThroughParamType, Class<?> targetType) {
-        super("No through param found on '%s' for target '%s'".formatted(noThroughParamType.getSimpleName(), targetType.getSimpleName()));
+    public PayloadOperationException(Class<?> noPayloadParamType, Class<?> targetType) {
+        super("No payload param found on '%s' for target '%s'".formatted(noPayloadParamType.getSimpleName(), targetType.getSimpleName()));
     }
 
-    public PayloadOperationException(Class<?> expectedThroughType, Class<?> actualThroughType, Class<?> scannedClassType) {
-        super("Expected '%s' through param, but '%s' expected on '%s'".formatted(expectedThroughType.getSimpleName(), actualThroughType.getSimpleName(), scannedClassType.getSimpleName()));
+    public PayloadOperationException(Class<?> actualPayloadType, Class<?> expectedPayloadType, Class<?> scannedClassType) {
+        super("Got '%s' 'payload' param, but '%s' expected on '%s'".formatted(actualPayloadType.getSimpleName(), expectedPayloadType.getSimpleName(), scannedClassType.getSimpleName()));
+    }
+
+    public PayloadOperationException(AssociatedObject thisObj, AssociatedObject target) {
+        super("Unable to perform payload operation. Associations between '%s' and '%s' do not exist".formatted(thisObj, target));
     }
 
     public PayloadOperationException(String message) {
         super(message);
-    }
-
-    public PayloadOperationException(Class<?> thisType, Class<?> targetType, String id) {
-        super("Can not retrieve payloads from '%s' target '%s' and id '%s' for association without payload param".formatted(thisType.getSimpleName(), targetType.getSimpleName(), id));
     }
 }

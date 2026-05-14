@@ -30,11 +30,11 @@ class AssociationMetadata {
                 .min(association.min())
                 .max(association.max())
                 .qualifier(getQualifier(association.qualifier()))
-                .payloadType(getThrough(association))
+                .payloadType(getPayloadType(association))
                 .build();
     }
 
-    private static Class<? extends Payload> getThrough(Association association) {
+    private static Class<? extends Payload> getPayloadType(Association association) {
         return association.payload().equals(None.class) ? null : association.payload();
     }
 

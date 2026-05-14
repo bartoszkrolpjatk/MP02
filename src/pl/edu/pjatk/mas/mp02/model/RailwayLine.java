@@ -10,6 +10,7 @@ import pl.edu.pjatk.mas.mp02.model.association.Association;
 @Data
 @RequiredArgsConstructor
 @Association(target = Train.class, payload = TrainService.class)
+@Association(target = Station.class, payload = StationStop.class, min = 2)
 public class RailwayLine extends AssociatedObject {
     private final Integer line;
 }
