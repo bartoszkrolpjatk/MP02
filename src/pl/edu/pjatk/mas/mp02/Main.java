@@ -109,7 +109,7 @@ public class Main {
             ic.printAssociations();
         }
 
-        if (true) {
+        if (false) {
             Train eic = new Train("EIC4121", "Intercity", "EIC");
             Carriage carriage = new Carriage(15, CarriageType.STANDARD, CarriageClass.SECOND);
             eic.link(carriage);
@@ -133,10 +133,18 @@ public class Main {
             eic.printAssociations();
         }
 
-        if (false) {
+        if (true) {
             Train eic = new Train("EIC4121", "Intercity", "EIC");
             RailwayLine railwayLine = new RailwayLine(19);
-            TrainService trainService = new TrainService(LocalDateTime.now(), LocalDateTime.now().plusHours(3));
+            TrainService trainService1 = new TrainService(LocalDateTime.now(), LocalDateTime.now().plusHours(3));
+
+            eic.link(railwayLine, trainService1);
+
+            eic.printAssociations();
+
+            eic.removePayload(railwayLine, trainService1);
+
+            eic.printAssociations();
         }
     }
 }

@@ -10,4 +10,8 @@ public class IncorrectQualifierDeclaration extends RuntimeException {
     public IncorrectQualifierDeclaration(String declaredField, Class<?> thisType) {
         super("Field '%s' does not exist on '%s'".formatted(declaredField, thisType));
     }
+
+    public IncorrectQualifierDeclaration(Field field) {
+        super("Can not access '%s'".formatted(field));
+    }
 }

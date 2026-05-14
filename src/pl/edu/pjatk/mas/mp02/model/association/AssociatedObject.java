@@ -1,5 +1,6 @@
 package pl.edu.pjatk.mas.mp02.model.association;
 
+import pl.edu.pjatk.mas.mp02.model.association.exception.declaration.IncorrectQualifierDeclaration;
 import pl.edu.pjatk.mas.mp02.model.association.exception.operation.AssociationAlreadyExistsException;
 import pl.edu.pjatk.mas.mp02.model.association.exception.operation.AssociationException;
 import pl.edu.pjatk.mas.mp02.model.association.exception.operation.AssociationIsNotQualifiedException;
@@ -155,7 +156,7 @@ public abstract class AssociatedObject {
                     try {
                         return f.get(target);
                     } catch (IllegalAccessException e) {
-                        throw new RuntimeException("Field '%s' should be accessible!".formatted(f));
+                        throw new IncorrectQualifierDeclaration(f);
                     }
                 });
     }
