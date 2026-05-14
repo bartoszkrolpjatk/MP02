@@ -124,29 +124,34 @@ public abstract class AssociatedObject {
         links.remove(key);
     }
 
-    public List<AssociatedObject> getLinks(Class<? extends AssociatedObject> targetType) throws AssociationException {
+    public <T extends AssociatedObject> List<T> getLinks(Class<T> targetType) throws AssociationException {
         return getLinks(targetType, DEFAULT_ASSOCIATION_ID);
     }
 
-    public List<AssociatedObject> getLinks(Class<? extends AssociatedObject> targetType, String id) throws AssociationException {//todo: przygotować getLinks na klasy asocjacji
+    public <T extends AssociatedObject> List<T> getLinks(Class<T> targetType, String id) throws AssociationException {//todo: przygotować getLinks na klasy asocjacji
         AssociationMetadata metadata = resolveByTargetAndId(this.getClass(), targetType, id);
         Map<Object, AssociationEntry> links = Optional.ofNullable(associations.get(metadata))
                 .orElseThrow(() -> new AssociationsDoNotExistException(this.getClass(), targetType, id));
-        return new ArrayList<>(links.values().stream().map(AssociationEntry::target).toList());
+        return links.values().stream()
+                .map(AssociationEntry::target)
+                .map(targetType::cast)
+                .toList();
     }
 
-    public Optional<AssociatedObject> findByQualifier(Class<? extends AssociatedObject> targetType, Object qualifier) throws AssociationException {
+    public <T extends AssociatedObject> Optional<T> findByQualifier(Class<T> targetType, Object qualifier) throws AssociationException {
         return findByQualifier(targetType, DEFAULT_ASSOCIATION_ID, qualifier);
     }
 
-    public Optional<AssociatedObject> findByQualifier(Class<? extends AssociatedObject> targetType, String id, Object qualifier) throws AssociationException {//todo: przygotować findByQualifier na klasy asocjacji
+    public <T extends AssociatedObject> Optional<T> findByQualifier(Class<T> targetType, String id, Object qualifier) throws AssociationException {//todo: przygotować findByQualifier na klasy asocjacji
         AssociationMetadata metadata = resolveByTargetAndId(this.getClass(), targetType, id);
         if (metadata.qualifier().isEmpty())
             throw new AssociationIsNotQualifiedException(targetType, id);
 
         Map<Object, AssociationEntry> links = Optional.ofNullable(associations.get(metadata))
                 .orElseThrow(() -> new AssociationsDoNotExistException(this.getClass(), targetType, id));
-        return Optional.ofNullable(links.get(qualifier)).map(AssociationEntry::target);
+        return Optional.ofNullable(links.get(qualifier))
+                .map(AssociationEntry::target)
+                .map(targetType::cast);
     }
 
     private Optional<Object> findQualifier(AssociationMetadata metadata, AssociatedObject target) {

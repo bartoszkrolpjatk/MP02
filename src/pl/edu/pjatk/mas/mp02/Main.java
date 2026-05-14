@@ -15,6 +15,7 @@ import pl.edu.pjatk.mas.mp02.model.carriage.CarriageClass;
 import pl.edu.pjatk.mas.mp02.model.carriage.CarriageType;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class Main {
     public static void main(String[] args) throws AssociationException {
@@ -133,7 +134,7 @@ public class Main {
             eic.printAssociations();
         }
 
-        if (true) {
+        if (false) {
             Train eic = new Train("EIC4121", "Intercity", "EIC");
             RailwayLine railwayLine = new RailwayLine(19);
             TrainService trainService1 = new TrainService(LocalDateTime.now(), LocalDateTime.now().plusHours(3));
@@ -146,11 +147,20 @@ public class Main {
 
             eic.printAssociations();
         }
+
+        if (true) {
+            Train eic = new Train("EIC4121", "Intercity", "EIC");
+            RailwayLine railwayLine10 = new RailwayLine(10);
+            RailwayLine railwayLine11 = new RailwayLine(11);
+            eic.link(railwayLine10);
+            eic.link(railwayLine11);
+
+            List<RailwayLine> links = eic.getLinks(RailwayLine.class);
+            System.out.println(links);
+        }
     }
 }
 //todo: relink (nie można przepiąć kompozycji)
 //todo: refactor walidacji w cache holder
-//todo: czy Quailifier.type jest potrzebny?
-//todo: remove payload from association
 //todo: bag constraint na klasie asocjacji
 //todo: dodać typ generyczny w AssociatedObject żeby nie robić rzutowania
