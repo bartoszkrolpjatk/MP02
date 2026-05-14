@@ -10,10 +10,11 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Repeatable(Associations.class)
 public @interface Association {
-    Class<?> targetType();
+    Class<? extends AssociatedObject> target();
     String id() default AssociatedObject.DEFAULT_ASSOCIATION_ID;
     int min() default 0;
     int max() default Integer.MAX_VALUE;
     boolean isComposition() default false;
     Qualifier qualifier() default @Qualifier(fieldName = "", type = Void.class);
+    Class<? extends Payload> payload() default None.class;
 }
