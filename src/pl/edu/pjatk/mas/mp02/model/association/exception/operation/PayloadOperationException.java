@@ -12,4 +12,8 @@ public class PayloadOperationException extends AssociationException {
     public PayloadOperationException(String message) {
         super(message);
     }
+
+    public PayloadOperationException(Class<?> thisType, Class<?> targetType, String id) {
+        super("Can not retrieve payloads from '%s' target '%s' and id '%s' for association without payload param".formatted(thisType.getSimpleName(), targetType.getSimpleName(), id));
+    }
 }

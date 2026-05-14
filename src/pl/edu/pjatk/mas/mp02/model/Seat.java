@@ -8,7 +8,7 @@ import pl.edu.pjatk.mas.mp02.model.association.Association;
 import pl.edu.pjatk.mas.mp02.model.carriage.Carriage;
 
 @Data
-@EqualsAndHashCode(callSuper = true)
+@EqualsAndHashCode(callSuper = false)
 @RequiredArgsConstructor
 @Association(target = Ticket.class)
 @Association(target = Carriage.class, isComposition = true, min = 1, max = 1)
